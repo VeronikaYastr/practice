@@ -1,0 +1,12 @@
+commit 47954615a84f6107e5ec6315930a851634a469b7 (HEAD -> master)
+Author: VeronikaYastr <verbelka1212@gmail.com>
+Date:   Thu Feb 8 19:44:04 2018 +0300
+
+    add
+
+commit 2f3c6e1e6d35df80ea3b28ecb5e51c15bc74d477
+Author: VeronikaYastr <verbelka1212@gmail.com>
+Date:   Thu Feb 8 19:40:18 2018 +0300
+
+    add
+
