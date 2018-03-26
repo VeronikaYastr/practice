@@ -4,8 +4,8 @@ const fs = require('fs');
 http.createServer(function (request, response) {
    fs.readFile('./' + request.url, function(err, data) {
        if (!err) {
-           var dotoffset = request.url.lastIndexOf('.');
-           var mimetype = dotoffset == -1
+           const dotoffset = request.url.lastIndexOf('.');
+           const mimetype = dotoffset == -1
                            ? 'text/plain'
                            : {
                                '.html' : 'text/html',
