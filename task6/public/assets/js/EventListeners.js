@@ -122,7 +122,7 @@ function addPost() {
     let post = {};
     if(isEditing){
         post = editPost;
-        if(desсr !== "")
+        if(descr !== "")
             post.description = descr;
         if(!tags.every(item => item === ""))
             post.hashTags = tags;
