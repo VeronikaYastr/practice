@@ -85,7 +85,6 @@ function logout() {
 function loginSubmit() {
     let username = document.forms['login']['user'].value;
     localStorage.setItem("user", username);
-    localStorage.removeItem("StartPosts");
     location.hash = "#photos";
     navigate();
 }
@@ -123,7 +122,7 @@ function addPost() {
     let post = {};
     if(isEditing){
         post = editPost;
-        if(desr !== "")
+        if(desсr !== "")
             post.description = descr;
         if(!tags.every(item => item === ""))
             post.hashTags = tags;
