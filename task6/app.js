@@ -19,10 +19,6 @@ http.createServer(function (request, response) {
            response.setHeader('Content-type' , mimetype);
            response.end(data);
            console.log( request.url, mimetype );
-       } else {
-           console.log ('file not found: ' + request.url);
-           response.writeHead(404, "Not Found");
-           response.end();
        }
    });
 }).listen(8080);
