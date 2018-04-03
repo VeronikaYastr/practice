@@ -96,7 +96,7 @@ function filterForm() {
     let foundPosts = JSON.parse(localStorage.getItem("StartPosts"));
 
     if(date !== "")
-        foundPosts = foundPosts.filter(post => (new Date(post.createdAt) <= Date.now()));
+        foundPosts = foundPosts.filter(post => (new Date(post.createdAt) >= new Date(date));
     if(author !== "")
         foundPosts = foundPosts.filter(post => post.author === author);
     if(!hashs.every(item => item === ""))
