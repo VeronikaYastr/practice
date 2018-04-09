@@ -8,7 +8,7 @@ const data = require("./public/assets/js/Posts.js");
 
 
 app.use(bodyParser.json());
-app.use(express.static('public'), express.static('public'));
+app.use('/public',, express.static('public'));
 
 
 app.post('/add', (req, res) => {
