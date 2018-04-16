@@ -23,7 +23,7 @@
         for(let i = 0; i < filters.hashTags.length; i++)
             array = array.filter(x => x.hashTags.indexOf(filters.hashTags[i]) !== -1);
 
-        return sortByDate(array).slice(skip, skip + top);
+        return sortByDate(array.filter(x => x.isDeleted === 'false')).slice(skip, skip + top);
     };
 
     function findPost(array, id) {
@@ -73,13 +73,12 @@
 
     exports.editPhotoPost = function editPhotoPost(array, id, photoPost) {
         let oldPhotoPost = findPost(array, id);
-        oldPhotoPost.likes = photoPost.likes;
 
         let empty = true;
         if (oldPhotoPost === null || photoPost === undefined || id === undefined)
             return false;
 
-        if (photoPost.description !== undefined) {
+        if (photoPost.description !== undefined && photoPost.description !== "") {
             if (photoPost.description.length >= 200)
                 return false;
             else {
@@ -97,7 +96,7 @@
             }
         }
 
-        if (photoPost.hashTags !== undefined) {
+        if (photoPost.hashTags !== undefined && photoPost.hashTags.length !== 0) {
             if (photoPost.hashTags.length === 0)
                 return false;
             else {
@@ -107,6 +106,27 @@
         }
 
         return empty === false;
+    };
+
+    exports.likePost = function likePost(array, id, author) {
+      if(array === undefined || id === undefined || author === undefined)
+          return false;
+
+      let oldPost = findPost(array, id);
+
+      if(oldPost.isDeleted === 'false') {
+          let index = oldPost.likes.indexOf(author);
+          if (index === -1) {
+              oldPost.likes.push(author);
+              return true;
+          }
+          else {
+              oldPost.likes.splice(index, 1);
+              return false;
+          }
+      }
+
+      return false;
     };
 
     exports.removePhotoPost = function removePhotoPost(id, array) {

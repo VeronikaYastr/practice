@@ -65,6 +65,7 @@
             icon = "fa fa-heart-o";
         else
             icon = "fa fa-heart";
+
         likes.innerHTML = "<p>" + post.likes.length + "</p>" + "<i class=\"" + icon + "\" id = \"like" + post.id + "\"></i>";
 
         dateTime.appendChild(dateItem);
@@ -114,57 +115,6 @@
 
 } )(this.postView = {});
 
-/*function showPosts(skip, top, name) {
-    let photoPosts = [];
-    localStorage.removeItem("editing");
-    document.getElementsByClassName("photos")[0].innerHTML = "";
-    let filterPosts = JSON.parse(localStorage.getItem("foundPosts"));
-    let notFound = document.getElementsByTagName("h3")[0];
-    notFound.innerHTML = "";
-
-    let loadButton = document.getElementById("load");
-    if (modulePost.amount > 0) {
-        loadButton.addEventListener("click", loadPosts);
-        loadButton.style.display = 'block';
-    }
-    else
-        loadButton.style.display = 'none';
-
-    if(filterPosts !== null){
-        name = "foundPosts";
-        let filters = JSON.parse(localStorage.getItem("filters")).split(",");
-        if(filters.filter(item => item === "").length === 3 && modulePost.amount > 0)
-        {
-            name = "StartPosts";
-            localStorage.removeItem("foundPosts");
-            loadButton.style.display = 'block';
-        }
-        else {
-            loadButton.style.display = 'none';
-            document.forms['filter']['date'].value = filters[0];
-            document.forms['filter']['name'].value = filters[1];
-            document.forms['filter']['hashTags'].value = filters[2];
-
-            if(filterPosts.length === 0)
-                notFound.innerHTML = "Sorry, no matches found...";
-        }
-    }
-
-    if(skip === 0) {
-        photoPosts = JSON.parse(localStorage.getItem(name));
-    }
-    else {
-        let allPosts = JSON.parse(localStorage.getItem("AllPosts"));
-        let newPhotoPosts = modulePost.getPhotoPosts(allPosts, skip, top);
-        photoPosts = JSON.parse(localStorage.getItem(name)).concat(newPhotoPosts);
-        localStorage.setItem(name, JSON.stringify(photoPosts));
-        modulePost.amount -= newPhotoPosts.length;
-    }
-    events.skip = photoPosts.length;
-    for (let i = 0; i < photoPosts.length; i++)
-        postView.show(photoPosts[i], ++skip);
-
-}*/
 
 function showPosts(photoPosts, isButton){
     if(!isButton)
@@ -188,14 +138,9 @@ function addPost(post) {
     postsModel.addPhotoPost(post);
 }
 
-function removePost(elem, array, id) {
-    if(confirm("Do you want to delete this post?")) {
-        postsModel.removePhotoPost(id, JSON.parse(localStorage.getItem("AllPosts")), "AllPosts");
-        postsModel.removePhotoPost(id, array, "StartPosts");
+function removePost(elem) {
         elem.parentNode.parentNode.parentNode.style.display = 'none';
-        showPosts(0, 10, "StartPosts");
         menu(document.getElementsByClassName("photos")[0]);
-    }
 }
 
 function editPost(id,post) {

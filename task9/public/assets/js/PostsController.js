@@ -20,6 +20,7 @@ function getContent(fragmentId, callback){
 //work with pages
 function navigate(){
     const fragmentId = location.hash.substr(1);
+    console.log(fragmentId);
     getContent(fragmentId, function (content) {
         document.getElementById("cur").innerHTML = content;
         if(fragmentId === "photos"){
@@ -28,6 +29,9 @@ function navigate(){
 
         //filling field with hashTags with "#" before new hashTag
         if(fragmentId === "add"){
+            let user = localStorage.getItem("user");
+            checkUser(user);
+
             document.getElementsByClassName("input-upload-photos")[0].addEventListener("keydown", function () {
                 if(event.keyCode === 32 || event.keyCode === 0) {
                     setTimeout(function(){document.forms['addForm']['tags-upload'].value += "#"}, 10);
@@ -62,6 +66,8 @@ window.addEventListener("hashchange", navigate);
 function startWork() {
     let user = localStorage.getItem("user");
     checkUser(user);
+    if(localStorage.getItem("id") === null)
+        localStorage.setItem("id", "100");
 
     if(user !== null) {
         menu(document.getElementsByClassName("photos")[0]);
@@ -77,7 +83,7 @@ function startWork() {
         localStorage.setItem("filters",'{"author":"", "date":"", "hashTags":[]}');
     }
 
-   let skip = parseInt(localStorage.getItem("skip"));
+   let skip = 0;
    let top = parseInt(localStorage.getItem("top"));
    let filters = localStorage.getItem("filters");
 
@@ -143,7 +149,7 @@ function getServerPost(id) {
             console.log(xhr.status + ': ' + xhr.statusText);
         }
         else {
-            postsController.post = JSON.parse(xhr.responseText);
+            return true;
         }
     };
     xhr.send();
@@ -160,6 +166,14 @@ function editServerPost(id, post) {
             console.log(xhr.status + ': ' + xhr.statusText);
         }
         else {
+            if(xhr.responseText === "false") {
+                alert('Some fields are incorrectly filled!');
+                location.hash = "#add";
+                navigate();
+            }
+            else {
+                localStorage.removeItem("editing");
+            }
             return true;
         }
     };
@@ -167,12 +181,91 @@ function editServerPost(id, post) {
     xhr.send(JSON.stringify(post));
 }
 
+function addServerPost(post) {
+    let xhr = new XMLHttpRequest();
+    xhr.open("POST", "/addPost", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState !== 4) return;
+
+        if (xhr.status !== 200) {
+            console.log(xhr.status + ': ' + xhr.statusText);
+        }
+        else {
+            if(xhr.responseText === "false") {
+                alert('Some fields are incorrectly filled!');
+                location.hash = "#add";
+                navigate();
+            }
+            return true;
+        }
+    };
+
+    xhr.send(JSON.stringify(post));
+}
+
+function deleteServerPost(id) {
+    let xhr = new XMLHttpRequest();
+    xhr.open("DELETE", "/delPost/" + parseInt(id), true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState !== 4) return;
+
+        if (xhr.status !== 200) {
+            console.log(xhr.status + ': ' + xhr.statusText);
+        }
+        else {
+            loadServerPosts(false,0, localStorage.getItem("top"),  localStorage.getItem("filters"));
+            return true;
+        }
+    };
+
+    xhr.send();
+}
+
+function likeServerPost(id, author, elem) {
+    let xhr = new XMLHttpRequest();
+    xhr.open("POST", "/likePost/" + parseInt(id) + '&' + author, true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState !== 4) return;
+
+        if (xhr.status !== 200) {
+            console.log(xhr.status + ': ' + xhr.statusText);
+        }
+        else {
+            let icon = "";
+            let index = 0;
+            let likes = elem.parentNode;
+            let length = parseInt(likes.firstChild.innerHTML);
+
+            if(xhr.responseText === "true")
+            {
+                icon = "fa fa-heart";
+                index = -1;
+                length += 1;
+            }
+            else {
+                icon = "fa fa-heart-o";
+                length -= 1;
+            }
+
+            likes.firstChild.innerHTML = length;
+            likes.children[1].className = icon;
+            sizeLike(likes.children[1], index);
+        }
+    };
+
+    xhr.send();
+}
+
 //load with button
 function loadPosts() {
     let skip = parseInt(localStorage.getItem("skip"));
-    if(skip !== undefined && skip !== null)
-        skip += 10;
     let top = parseInt(localStorage.getItem("top"));
+
+    if(skip !== undefined && skip !== null)
+        skip = top;
     if(top !== undefined && top !== null)
         top += 10;
 
@@ -198,34 +291,24 @@ function filterForm() {
 
 function addPost() {
     let user = localStorage.getItem("user");
-    let editPost = JSON.parse(localStorage.getItem("editing"));
+    let editPostId = JSON.parse(localStorage.getItem("editing"));
     let isEditing = false;
-    if(editPost !== null)
+    if(editPostId !== null)
         isEditing = true;
 
     let descr = document.forms['addForm']['description-upload'].value;
     let tags = document.forms['addForm']['tags-upload'].value.split(" ");
 
-    let post = {};
+    let post = {description: "", hashTags : []};
     if(isEditing){
-        post = editPost;
         if(descr !== "")
             post.description = descr;
         if(!tags.every(item => item === ""))
             post.hashTags = tags;
-
-        if(!postsModel.editPhotoPost(JSON.parse(localStorage.getItem("StartPosts")),post.id, post, "StartPosts"))
-        {
-            alert('Some fields are incorrectly filled!');
-        }
-        else {
-            postsModel.editPhotoPost(JSON.parse(localStorage.getItem("AllPosts")),post.id, post, "AllPosts");
-            localStorage.removeItem("editing");
-            location.hash = "#photos";
-            navigate();
-        }
+        editServerPost(editPostId, post);
     }
     else {
+        post = {};
         post.id = (parseInt(localStorage.getItem("id")) + 1) + "";
         localStorage.setItem("id", post.id);
         post.author = user;
@@ -233,20 +316,15 @@ function addPost() {
         post.description = descr;
         post.hashTags = tags;
         post.likes = [];
-
         //default link
         postsController.link = 'https://sun9-8.userapi.com/c830208/v830208049/c5a0e/frB0c9aQ9ZI.jpg';
         post.photoLink = postsController.link;
+        post.isDeleted = 'false';
 
-        if (!postsModel.addPhotoPost(JSON.parse(localStorage.getItem("StartPosts")), post, "StartPosts")) {
-            alert('Some fields are not filled!');
-        }
-        else {
-            postsModel.addPhotoPost(JSON.parse(localStorage.getItem("AllPosts")), post, "AllPosts");
-            location.hash = "#photos";
-            navigate();
-        }
+        addServerPost(post);
     }
+    location.hash = "#photos";
+    navigate();
 }
 
 
@@ -254,30 +332,6 @@ function setPhoto(link) {
     document.getElementById("edit-photo-load").innerHTML = "<img src = \"" + link + "\">";
 }
 
-//likes
-function makeLike(elem, id, author) {
-    getServerPost(id);
-    let post = postsController.post;
-
-    let likes = elem.parentNode;
-    let index = post.likes.indexOf(author);
-    let icon = "";
-
-    if (index === -1) {
-        post.likes.push(author);
-        icon = "fa fa-heart";
-    }
-    else {
-        post.likes.splice(index, 1);
-        icon = "fa fa-heart-o";
-    }
-
-    editServerPost(id, post);
-
-    likes.firstChild.innerHTML = post.likes.length;
-    likes.children[1].className = icon;
-    sizeLike(likes.children[1], index);
-}
 
 function sizeLike(like, isOn) {
     if (isOn === -1)
@@ -299,14 +353,16 @@ function menu(elem) {
         let id = target.getAttribute('id');
 
         if (id.startsWith("like"))
-            makeLike(target, id.replace('like', ''), localStorage.getItem("user"));
-        if (id.startsWith("delete"))
-            removePost(target, savedPosts, id.replace('delete', ''));
+            likeServerPost(id.replace('like', ''), localStorage.getItem("user"), target);
+        if (id.startsWith("delete")) {
+            if(confirm("Do you want to delete this post?")){
+                deleteServerPost(id.replace('delete', ''));
+                removePost(target);
+            }
+        }
         if(id.startsWith("edit"))
         {
-            let post = JSON.parse(localStorage.getItem("StartPosts")).find(post => post.id === id.replace('edit', ''));
-            localStorage.setItem("editing", JSON.stringify(post));
-            postsController.link = post.photoLink;
+            localStorage.setItem("editing",id.replace('edit', '') );
             location.hash = "#add";
             navigate();
         }

@@ -7,6 +7,25 @@ const data = require("./public/assets/js/PostsModel.js");
 app.use(bodyParser.json());
 app.use('/public', express.static('public'));
 
+app.post('/addPost', (req, res) => {
+    let post = req.body;
+    let posts = JSON.parse(fs.readFileSync("server/data/posts.json"));
+    let allPosts = data.postsModel.addPhotoPost(posts, post);
+    if (allPosts !== null) {
+        fs.writeFile("server/data/posts.json", JSON.stringify(allPosts), function (error) {
+            if (error){
+                throw error;
+            }
+
+        });
+        res.send("true");
+        res.status(200).end();
+    } else {
+        res.send("false");
+        res.status(404).end();
+    }
+});
+
 app.post('/getPosts/:skip&:top', (req, res) =>{
     let allPosts = JSON.parse(fs.readFileSync("server/data/posts.json"));
     let filteredPosts = data.postsModel.getPhotoPosts( allPosts,parseInt(req.params.skip),parseInt(req.params.top), req.body);
@@ -16,6 +35,17 @@ app.post('/getPosts/:skip&:top', (req, res) =>{
     else{
         res.status(404).end();
     }
+});
+
+app.post('/likePost/:id&:author', (req, res) =>{
+    let allPosts = JSON.parse(fs.readFileSync("server/data/posts.json"));
+    let makeLike = data.postsModel.likePost(allPosts, req.params.id, req.params.author);
+    fs.writeFile("server/data/posts.json", JSON.stringify(allPosts), function(error){
+        if(error){
+            throw error;
+        }
+    });
+    res.send(makeLike);
 });
 
 app.get('/getPost/:id', (req, res) => {
@@ -47,14 +77,19 @@ app.delete('/delPost/:id', (req, res) => {
 app.put('/editPost/:id', (req, res) => {
   let posts = JSON.parse(fs.readFileSync("server/data/posts.json"));
   let post = req.body;
+  console.log(post);
   if (data.postsModel.editPhotoPost(posts, req.params.id, post)) {
     fs.writeFile("server/data/posts.json", JSON.stringify(posts), function (error) {
       if (error) {
         throw error;
       }
     });
+      res.send("true");
+      console.log("hey");
     res.status(200).end();
   } else {
+      res.send("false");
+      console.log("hi");
     res.status(404).end();
   }
 
