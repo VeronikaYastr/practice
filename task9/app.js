@@ -20,7 +20,7 @@ app.post('/getPosts/:skip&:top', (req, res) =>{
 
 app.get('/getPost/:id', (req, res) => {
   let posts = JSON.parse(fs.readFileSync("server/data/posts.json"));
-  let post = data.postsModel.getPhotoPost( req.params.id, posts);
+  let post = data.postsModel.getPhotoPost(posts, req.params.id);
   if(post){
     res.send(post);
   }
@@ -47,8 +47,7 @@ app.delete('/delPost/:id', (req, res) => {
 app.put('/editPost/:id', (req, res) => {
   let posts = JSON.parse(fs.readFileSync("server/data/posts.json"));
   let post = req.body;
-
-  if ( data.postsModel.editPhotoPost(posts, req.params.id, post)) {
+  if (data.postsModel.editPhotoPost(posts, req.params.id, post)) {
     fs.writeFile("server/data/posts.json", JSON.stringify(posts), function (error) {
       if (error) {
         throw error;
@@ -60,6 +59,10 @@ app.put('/editPost/:id', (req, res) => {
   }
 
 });
+
+app.use(((req, res) => {
+    res.sendFile('error404.html', { root: 'public' });
+}));
 
 
 app.listen(3000, () => {

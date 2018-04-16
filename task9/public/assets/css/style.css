@@ -409,8 +409,8 @@ body {
   fill:black;
   font-size: 6px;
   font-weight: normal;
-
 }
+
 svg{
   width: 80%;
   fill: white;
@@ -430,6 +430,10 @@ svg{
   border: 0;
   width: 40px;
   border-radius: 10px;
+}
+.error404-button a {
+  color: black;
+  text-decoration: none;
 }
 
 /*-------------------------------------------------------------------------------------------------------------------------------*/

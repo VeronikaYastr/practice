@@ -1,7 +1,7 @@
 (function(exports) {
     exports.skip = 0;
     exports.top = 10;
-    exports.amount = 0;
+    exports.post = null;
 
     exports.link = 'https://sun9-8.userapi.com/c830208/v830208049/c5a0e/frB0c9aQ9ZI.jpg';
 })(this.postsController = {});
@@ -134,7 +134,7 @@ function loadServerPosts(isButton, skip, top, filters) {
 
 function getServerPost(id) {
     let xhr = new XMLHttpRequest();
-    xhr.open("GET", "/getPost/" + id, true);
+    xhr.open("GET", "/getPost/" + parseInt(id), true);
     xhr.setRequestHeader("Content-Type", "application/json");
     xhr.onreadystatechange = function() {
         if (xhr.readyState !== 4) return;
@@ -143,14 +143,28 @@ function getServerPost(id) {
             console.log(xhr.status + ': ' + xhr.statusText);
         }
         else {
-            return JSON.parse(xhr.responseText);
+            postsController.post = JSON.parse(xhr.responseText);
         }
     };
-
+    xhr.send();
 }
 
 function editServerPost(id, post) {
-    
+    let xhr = new XMLHttpRequest();
+    xhr.open("PUT", "/editPost/" + parseInt(id), true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState !== 4) return;
+
+        if (xhr.status !== 200) {
+            console.log(xhr.status + ': ' + xhr.statusText);
+        }
+        else {
+            return true;
+        }
+    };
+
+    xhr.send(JSON.stringify(post));
 }
 
 //load with button
@@ -235,13 +249,16 @@ function addPost() {
     }
 }
 
+
 function setPhoto(link) {
     document.getElementById("edit-photo-load").innerHTML = "<img src = \"" + link + "\">";
 }
 
 //likes
 function makeLike(elem, id, author) {
-    let post = getServerPost(id);
+    getServerPost(id);
+    let post = postsController.post;
+
     let likes = elem.parentNode;
     let index = post.likes.indexOf(author);
     let icon = "";
@@ -255,7 +272,7 @@ function makeLike(elem, id, author) {
         icon = "fa fa-heart-o";
     }
 
-    postsModel.editPhotoPost(savedPosts, id, post);
+    editServerPost(id, post);
 
     likes.firstChild.innerHTML = post.likes.length;
     likes.children[1].className = icon;

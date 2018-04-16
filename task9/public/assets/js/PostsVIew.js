@@ -59,7 +59,7 @@
 
         let likes = document.createElement("div");
         likes.className = "post-likes";
-        let index = post.likes.indexOf("Veronika");
+        let index = post.likes.indexOf(user);
         let icon = "";
         if (index === -1)
             icon = "fa fa-heart-o";

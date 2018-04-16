@@ -1,4 +1,9 @@
 (function(exports) {
+    function sortByDate(array) {
+        let newArray = array.slice();
+        return newArray.sort(function(a,b){return new Date(b.createdAt) - new Date(a.createdAt)});
+    }
+
     exports.getPhotoPosts = function getPhotoPosts(array, skip, top, filters) {
         if(array === undefined || array === null){
             return null;
@@ -21,12 +26,6 @@
         return sortByDate(array).slice(skip, skip + top);
     };
 
-
-    function sortByDate(array) {
-        let newArray = array.slice();
-        return newArray.sort(function(a,b){return new Date(b.createdAt) - new Date(a.createdAt)});
-    }
-
     function findPost(array, id) {
         return array.find(x => x.id === id);
     }
@@ -35,6 +34,7 @@
     exports.getPhotoPost = function getPhotoPost(array, id) {
         if (id === undefined)
             return null;
+
         return findPost(array, id);
     };
 
@@ -73,6 +73,8 @@
 
     exports.editPhotoPost = function editPhotoPost(array, id, photoPost) {
         let oldPhotoPost = findPost(array, id);
+        oldPhotoPost.likes = photoPost.likes;
+
         let empty = true;
         if (oldPhotoPost === null || photoPost === undefined || id === undefined)
             return false;
@@ -103,7 +105,6 @@
                 empty = false;
             }
         }
-
 
         return empty === false;
     };
