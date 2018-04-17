@@ -6,7 +6,8 @@
     <div class="edit-photo">
       <div id="edit-photo-load" draggable="true" ondragstart="event.dataTransfer.setData('text/plain',null)">
         <h1>Upload your photo</h1>
-        <button>Upload from computer</button>
+          <input type="file" id="fileElem" accept="image/*" style="display:none" onchange="loadFiles(this.files)">
+        <button onclick="clickEvent()">Upload from computer</button>
         <p>Or use drag and drop</p>
       </div>
     </div>

@@ -3,9 +3,32 @@ const app = express();
 const fs = require("fs");
 const bodyParser = require('body-parser');
 const data = require("./public/assets/js/PostsModel.js");
+const multer  = require('multer');
 
 app.use(bodyParser.json());
 app.use('/public', express.static('public'));
+
+let storage = multer.diskStorage({
+        destination: function(req, file, callback) {
+            callback(null, __dirname + '/public/tmp/upload_avatars');
+        },
+        filename: function(req, file, callback) {
+            let filename = file.fieldname + '-' + Date.now() + '-' + file.originalname;
+            callback(null, filename);
+        }
+    });
+
+let upload = multer({ storage: storage });
+
+app.post('/uploadImage', upload.single('file'), (req, res) => {
+   let filename = req.file.filename;
+   if(filename !== null){
+       res.send(filename);
+       res.status(200).end();
+   }
+   else
+       res.status(404).end();
+});
 
 app.get('/getLength', (req, res) => {
     let posts = JSON.parse(fs.readFileSync("server/data/posts.json"));
@@ -88,7 +111,6 @@ app.delete('/delPost/:id', (req, res) => {
 app.put('/editPost/:id', (req, res) => {
   let posts = JSON.parse(fs.readFileSync("server/data/posts.json"));
   let post = req.body;
-  console.log(post);
   if (data.postsModel.editPhotoPost(posts, req.params.id, post)) {
     fs.writeFile("server/data/posts.json", JSON.stringify(posts), function (error) {
       if (error) {
@@ -96,11 +118,9 @@ app.put('/editPost/:id', (req, res) => {
       }
     });
       res.send("true");
-      console.log("hey");
     res.status(200).end();
   } else {
       res.send("false");
-      console.log("hi");
     res.status(404).end();
   }
 

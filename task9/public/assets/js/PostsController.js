@@ -23,12 +23,15 @@ function navigate(){
     getContent(fragmentId, function (content) {
         document.getElementById("cur").innerHTML = content;
         if(fragmentId === "photos"){
+            localStorage.removeItem("editPost");
+            localStorage.removeItem("addPost");
+            localStorage.removeItem("editing");
             startWork();
         }
 
         //filling field with hashTags with "#" before new hashTag
         if(fragmentId === "add"){
-            setPhoto();
+            dropPhoto();
             let user = localStorage.getItem("user");
             checkUser(user);
 
@@ -47,8 +50,15 @@ function navigate(){
                     navigate();
                 }
             });
-            if(localStorage.getItem("editing") !== null)
+
+            if(localStorage.getItem("addPost") !== null)
+                addDomPost();
+
+            if(localStorage.getItem("editing") !== null) {
                 document.getElementsByClassName("add-page-title")[0].children[0].innerHTML = "Edit photo";
+                if(localStorage.getItem("editPost") !== null)
+                    editPost();
+            }
         }
     });
 }
@@ -155,6 +165,27 @@ function getServerLength() {
     xhr.send();
 }
 
+function getServerPost(id) {
+    let xhr = new XMLHttpRequest();
+    xhr.open("GET", "/getPost/" + parseInt(id), true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState !== 4) return;
+
+        if (xhr.status !== 200) {
+            console.log(xhr.status + ': ' + xhr.statusText);
+        }
+        else {
+            let post = JSON.parse(xhr.responseText);
+            localStorage.setItem("editPost", JSON.stringify(post.photoLink + "," + post.description + "," + post.hashTags));
+            location.hash = "#add";
+            navigate();
+            return true;
+        }
+    };
+    xhr.send();
+}
+
 function editServerPost(id, post) {
     let xhr = new XMLHttpRequest();
     xhr.open("PUT", "/editPost/" + parseInt(id), true);
@@ -190,6 +221,7 @@ function addServerPost(post) {
 
         if (xhr.status !== 200) {
             console.log(xhr.status + ': ' + xhr.statusText);
+            alert('Error! Can\'t post this photo :(');
         }
         else {
             if(xhr.responseText === "false") {
@@ -197,11 +229,49 @@ function addServerPost(post) {
                 location.hash = "#add";
                 navigate();
             }
+            else
+                localStorage.removeItem("addPost");
             return true;
         }
     };
 
     xhr.send(JSON.stringify(post));
+}
+
+function clickEvent() {
+    const fileElem = document.getElementById("fileElem");
+    if (fileElem) {
+        fileElem.click();
+    }
+}
+
+function loadFiles(files) {
+    let reader = new FileReader();
+    reader.readAsDataURL(files[0]);
+    reader.onloadend = function () {
+        setLink(reader.result);
+    };
+}
+
+function loadImage(post) {
+    let xhr = new XMLHttpRequest();
+    let formData = new FormData();
+    formData.append('file', post);
+
+    xhr.open("POST", "/uploadImage");
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState !== 4) return;
+
+        if (xhr.status !== 200) {
+            console.log(xhr.status + ': ' + xhr.statusText);
+        }
+        else {
+            postsController.photoLink = 'tmp/upload_avatars/' + xhr.responseText;
+            return true;
+        }
+    };
+
+    xhr.send(formData);
 }
 
 function deleteServerPost(id) {
@@ -317,53 +387,13 @@ function addPost() {
         post.hashTags = tags;
         post.likes = [];
 
-        //document.getElementById("edit-photo-load").getAttribute("src");
-        post.photoLink = document.getElementById("edit-photo-load").children[0].getAttribute("src");
-        console.log(post.photoLink);
+        post.photoLink = postsController.photoLink;
         post.isDeleted = 'false';
 
         addServerPost(post);
     }
     location.hash = "#photos";
     navigate();
-}
-
-
-function setPhoto(link) {
-    let dropArea = document.getElementById("edit-photo-load");
-
-    if(link !== undefined)
-        dropArea.innerHTML = "<img src = \"" + link + "\">";
-
-    dropArea.addEventListener("dragstart", function( event ) {
-        dropArea.style.opacity = ".5";
-    }, false);
-
-    dropArea.addEventListener("dragend", function( event ) {
-        dropArea.style.opacity = "";
-    }, false);
-
-    /* events fired on the drop targets */
-    dropArea.addEventListener("dragover", function( event ) {
-        event.preventDefault();
-    }, false);
-
-
-    dropArea.addEventListener("dragleave", function( event ) {
-        dropArea.style.background = "";
-    }, false);
-
-    dropArea.addEventListener("drop", function( event ) {
-        event.preventDefault();
-
-        let files = event.dataTransfer.files;
-        let reader = new FileReader();
-        reader.readAsDataURL(files[0]);
-        reader.onloadend = function () {
-            dropArea.innerHTML = "<img src = \"" + reader.result + "\" draggable='true'>";
-        };
-
-    }, false);
 }
 
 
@@ -397,8 +427,7 @@ function menu(elem) {
         if(id.startsWith("edit"))
         {
             localStorage.setItem("editing",id.replace('edit', '') );
-            location.hash = "#add";
-            navigate();
+            getServerPost(id.replace('edit', ''));
         }
     });
 }

@@ -134,17 +134,51 @@ function showPosts(photoPosts, isButton){
         postView.show(photoPosts[i], ++postsController.skip);
 }
 
-function addPost(post) {
-    postsModel.addPhotoPost(post);
+function dropPhoto() {
+    let dropArea = document.getElementById("edit-photo-load");
+
+    dropArea.addEventListener("dragover", function( event ) {
+        event.preventDefault();
+    }, false);
+
+
+    dropArea.addEventListener("drop", function( event ) {
+        event.preventDefault();
+
+        let files = event.dataTransfer.files;
+        loadImage(files[0]);
+        let reader = new FileReader();
+        reader.readAsDataURL(files[0]);
+        reader.onloadend = function () {
+            setLink(reader.result);
+        };
+
+    }, false);
+}
+
+function setLink(link) {
+    localStorage.setItem("addPost", JSON.stringify(link));
+    document.getElementById("edit-photo-load").innerHTML = "<img src = \"" + link + "\" draggable='true'>";
+}
+
+function editPost() {
+    let post = JSON.parse(localStorage.getItem("editPost")).split(",");
+    document.getElementById("edit-photo-load").innerHTML = "<img src = \"" + post[0] + "\">";
+    document.forms['addForm']['description-upload'].value = post[1];
+
+    for(let i = 2; i < post.length; i++){
+        document.forms['addForm']['tags-upload'].value += post[i] + " ";
+    }
+}
+
+function addDomPost() {
+    let post = JSON.parse(localStorage.getItem("addPost"));
+    setLink(post);
 }
 
 function removePost(elem) {
         elem.parentNode.parentNode.parentNode.style.display = 'none';
         menu(document.getElementsByClassName("photos")[0]);
-}
-
-function editPost(id,post) {
-    postsModel.editPhotoPost(id, post);
 }
 
 function checkUser(user) {
