@@ -20,7 +20,6 @@ function getContent(fragmentId, callback){
 //work with pages
 function navigate(){
     const fragmentId = location.hash.substr(1);
-    console.log(fragmentId);
     getContent(fragmentId, function (content) {
         document.getElementById("cur").innerHTML = content;
         if(fragmentId === "photos"){
@@ -29,6 +28,7 @@ function navigate(){
 
         //filling field with hashTags with "#" before new hashTag
         if(fragmentId === "add"){
+            setPhoto();
             let user = localStorage.getItem("user");
             checkUser(user);
 
@@ -49,7 +49,6 @@ function navigate(){
             });
             if(localStorage.getItem("editing") !== null)
                 document.getElementsByClassName("add-page-title")[0].children[0].innerHTML = "Edit photo";
-           // setPhoto(postsController.link);
         }
     });
 }
@@ -67,7 +66,7 @@ function startWork() {
     let user = localStorage.getItem("user");
     checkUser(user);
     if(localStorage.getItem("id") === null)
-        localStorage.setItem("id", "100");
+        getServerLength();
 
     if(user !== null) {
         menu(document.getElementsByClassName("photos")[0]);
@@ -138,9 +137,9 @@ function loadServerPosts(isButton, skip, top, filters) {
     xhr.send(filters);
 }
 
-function getServerPost(id) {
+function getServerLength() {
     let xhr = new XMLHttpRequest();
-    xhr.open("GET", "/getPost/" + parseInt(id), true);
+    xhr.open("GET", "/getLength", true);
     xhr.setRequestHeader("Content-Type", "application/json");
     xhr.onreadystatechange = function() {
         if (xhr.readyState !== 4) return;
@@ -149,6 +148,7 @@ function getServerPost(id) {
             console.log(xhr.status + ': ' + xhr.statusText);
         }
         else {
+            localStorage.setItem("id", xhr.responseText);
             return true;
         }
     };
@@ -316,9 +316,10 @@ function addPost() {
         post.description = descr;
         post.hashTags = tags;
         post.likes = [];
-        //default link
-        postsController.link = 'https://sun9-8.userapi.com/c830208/v830208049/c5a0e/frB0c9aQ9ZI.jpg';
-        post.photoLink = postsController.link;
+
+        //document.getElementById("edit-photo-load").getAttribute("src");
+        post.photoLink = document.getElementById("edit-photo-load").children[0].getAttribute("src");
+        console.log(post.photoLink);
         post.isDeleted = 'false';
 
         addServerPost(post);
@@ -329,7 +330,40 @@ function addPost() {
 
 
 function setPhoto(link) {
-    document.getElementById("edit-photo-load").innerHTML = "<img src = \"" + link + "\">";
+    let dropArea = document.getElementById("edit-photo-load");
+
+    if(link !== undefined)
+        dropArea.innerHTML = "<img src = \"" + link + "\">";
+
+    dropArea.addEventListener("dragstart", function( event ) {
+        dropArea.style.opacity = ".5";
+    }, false);
+
+    dropArea.addEventListener("dragend", function( event ) {
+        dropArea.style.opacity = "";
+    }, false);
+
+    /* events fired on the drop targets */
+    dropArea.addEventListener("dragover", function( event ) {
+        event.preventDefault();
+    }, false);
+
+
+    dropArea.addEventListener("dragleave", function( event ) {
+        dropArea.style.background = "";
+    }, false);
+
+    dropArea.addEventListener("drop", function( event ) {
+        event.preventDefault();
+
+        let files = event.dataTransfer.files;
+        let reader = new FileReader();
+        reader.readAsDataURL(files[0]);
+        reader.onloadend = function () {
+            dropArea.innerHTML = "<img src = \"" + reader.result + "\" draggable='true'>";
+        };
+
+    }, false);
 }
 
 

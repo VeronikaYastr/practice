@@ -598,6 +598,10 @@ textarea {
   font-family: "Comic Sans MS";
 }
 
+.edit-photo-load img{
+  height: calc(100vh - 250px);
+}
+
 #edit-photo-load button:hover {
   background-color: #aedd94;
 }

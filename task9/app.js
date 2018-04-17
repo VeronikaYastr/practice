@@ -7,6 +7,17 @@ const data = require("./public/assets/js/PostsModel.js");
 app.use(bodyParser.json());
 app.use('/public', express.static('public'));
 
+app.get('/getLength', (req, res) => {
+    let posts = JSON.parse(fs.readFileSync("server/data/posts.json"));
+    if(posts.length !== 0){
+        res.send(JSON.stringify(posts.length));
+        res.status(200).end();
+    }
+    else{
+        res.status(404).end();
+    }
+});
+
 app.post('/addPost', (req, res) => {
     let post = req.body;
     let posts = JSON.parse(fs.readFileSync("server/data/posts.json"));
