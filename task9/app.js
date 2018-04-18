@@ -30,17 +30,6 @@ app.post('/uploadImage', upload.single('file'), (req, res) => {
        res.status(404).end();
 });
 
-app.get('/getLength', (req, res) => {
-    let posts = JSON.parse(fs.readFileSync("server/data/posts.json"));
-    if(posts.length !== 0){
-        res.send(JSON.stringify(posts.length));
-        res.status(200).end();
-    }
-    else{
-        res.status(404).end();
-    }
-});
-
 app.post('/addPost', (req, res) => {
     let post = req.body;
     let posts = JSON.parse(fs.readFileSync("server/data/posts.json"));
@@ -80,6 +69,17 @@ app.post('/likePost/:id&:author', (req, res) =>{
         }
     });
     res.send(makeLike);
+});
+
+app.get('/getLength', (req, res) => {
+    let posts = JSON.parse(fs.readFileSync("server/data/posts.json"));
+    if(posts.length !== 0){
+        res.send(JSON.stringify(posts.length));
+        res.status(200).end();
+    }
+    else{
+        res.status(404).end();
+    }
 });
 
 app.get('/getPost/:id', (req, res) => {

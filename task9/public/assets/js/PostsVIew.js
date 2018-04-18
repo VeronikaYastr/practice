@@ -122,12 +122,12 @@ function showPosts(photoPosts, isButton){
 
     let loadButton = document.getElementById("load");
     if (photoPosts.length >= 10) {
-        loadButton.addEventListener("click", loadPosts);
+        loadButton.addEventListener("click", loadButtonPosts);
         loadButton.style.display = 'block';
     }
     else{
         loadButton.style.display = 'none';
-        loadButton.removeEventListener("click", loadPosts);
+        loadButton.removeEventListener("click", loadButtonPosts);
     }
 
     for (let i = 0; i < photoPosts.length; i++)
@@ -171,7 +171,7 @@ function editPost() {
     }
 }
 
-function addDomPost() {
+function addPost() {
     let post = JSON.parse(localStorage.getItem("addPost"));
     setLink(post);
 }

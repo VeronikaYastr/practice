@@ -52,7 +52,7 @@ function navigate(){
             });
 
             if(localStorage.getItem("addPost") !== null)
-                addDomPost();
+                addPost();
 
             if(localStorage.getItem("editing") !== null) {
                 document.getElementsByClassName("add-page-title")[0].children[0].innerHTML = "Edit photo";
@@ -123,6 +123,44 @@ function loginSubmit() {
     navigate();
 }
 
+//load files from computer
+function clickEvent() {
+    const fileElem = document.getElementById("fileElem");
+    if (fileElem) {
+        fileElem.click();
+    }
+}
+
+function loadFiles(files) {
+    loadImage(files[0]);
+    let reader = new FileReader();
+    reader.readAsDataURL(files[0]);
+    reader.onloadend = function () {
+        setLink(reader.result);
+    };
+}
+
+function loadImage(post) {
+    let xhr = new XMLHttpRequest();
+    let formData = new FormData();
+    formData.append('file', post);
+
+    xhr.open("POST", "/uploadImage");
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState !== 4) return;
+
+        if (xhr.status !== 200) {
+            console.log(xhr.status + ': ' + xhr.statusText);
+        }
+        else {
+            postsController.photoLink = 'tmp/upload_avatars/' + xhr.responseText;
+            return true;
+        }
+    };
+
+    xhr.send(formData);
+}
+
 function loadServerPosts(isButton, skip, top, filters) {
     skip = skip || 0;
     top = top || 10;
@@ -183,6 +221,7 @@ function getServerPost(id) {
             return true;
         }
     };
+
     xhr.send();
 }
 
@@ -236,42 +275,6 @@ function addServerPost(post) {
     };
 
     xhr.send(JSON.stringify(post));
-}
-
-function clickEvent() {
-    const fileElem = document.getElementById("fileElem");
-    if (fileElem) {
-        fileElem.click();
-    }
-}
-
-function loadFiles(files) {
-    let reader = new FileReader();
-    reader.readAsDataURL(files[0]);
-    reader.onloadend = function () {
-        setLink(reader.result);
-    };
-}
-
-function loadImage(post) {
-    let xhr = new XMLHttpRequest();
-    let formData = new FormData();
-    formData.append('file', post);
-
-    xhr.open("POST", "/uploadImage");
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState !== 4) return;
-
-        if (xhr.status !== 200) {
-            console.log(xhr.status + ': ' + xhr.statusText);
-        }
-        else {
-            postsController.photoLink = 'tmp/upload_avatars/' + xhr.responseText;
-            return true;
-        }
-    };
-
-    xhr.send(formData);
 }
 
 function deleteServerPost(id) {
@@ -330,7 +333,7 @@ function likeServerPost(id, author, elem) {
 }
 
 //load with button
-function loadPosts() {
+function loadButtonPosts() {
     let skip = parseInt(localStorage.getItem("skip"));
     let top = parseInt(localStorage.getItem("top"));
 
@@ -348,6 +351,7 @@ function loadPosts() {
 }
 
 
+//filters
 function filterForm() {
     let date = document.forms['filter']['date'].value;
     let author = document.forms['filter']['name'].value;
@@ -410,7 +414,6 @@ function sizeLike(like, isOn) {
 
 //events : delete, like and edit
 function menu(elem) {
-    let savedPosts = JSON.parse(localStorage.getItem("StartPosts"));
 
     elem.addEventListener("click", function (e) {
         let target = e.target || e.srcElement;
