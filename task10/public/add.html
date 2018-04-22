@@ -1,0 +1,29 @@
+<section class="add-post">
+  <div class="add-page-title">
+    <h1>Add photo</h1>
+  </div>
+  <section class="edit-post">
+    <div class="edit-photo">
+      <div id="edit-photo-load" draggable="true" ondragstart="event.dataTransfer.setData('text/plain',null)">
+        <h1>Upload your photo</h1>
+          <input type="file" id="fileElem" accept="image/*" style="display:none" onchange="loadFiles(this.files)">
+        <button onclick="clickEvent()">Upload from computer</button>
+        <p>Or use drag and drop</p>
+      </div>
+    </div>
+    <div class="edit-description">
+      <form onsubmit="addPost()" action="" name="addForm">
+        <label for="tags-upload">
+          Add tags
+          <textarea class="input-upload-photos" name="tags-upload" id="tags-upload"></textarea>
+        </label>
+        <label for="description-upload">
+          Add description
+          <textarea class="input-upload-photos" name="description-upload" id="description-upload"></textarea>
+        </label>
+        <input  class="button-upload-photo" type="submit" value="Post photo">
+      </form>
+      <button class="button-cancel-photo" id ="cancel">Cancel</button>
+    </div>
+  </section>
+</section>
