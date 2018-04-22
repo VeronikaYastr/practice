@@ -166,7 +166,7 @@ function setLink(link) {
     document.getElementById("edit-photo-load").innerHTML = "<img src = \"" + link + "\" draggable='true'>";
 }
 
-function editPost() {
+function editPostDOM() {
     let post = JSON.parse(localStorage.getItem("editPost")).split(",");
     document.getElementById("edit-photo-load").innerHTML = "<img src = \"" + post[0] + "\">";
     document.forms['addForm']['description-upload'].value = post[1];
@@ -176,7 +176,7 @@ function editPost() {
     }
 }
 
-function addPost() {
+function addPostDOM() {
     let post = JSON.parse(localStorage.getItem("addPost"));
     setLink(post);
 }

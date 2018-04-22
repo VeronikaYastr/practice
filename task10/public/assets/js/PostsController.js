@@ -47,12 +47,12 @@ function navigate(){
             });
 
             if(localStorage.getItem("addPost") !== null)
-                addPost();
+                addPostDOM();
 
             if(localStorage.getItem("editing") !== null) {
                 document.getElementsByClassName("add-page-title")[0].children[0].innerHTML = "Edit photo";
                 if(localStorage.getItem("editPost") !== null)
-                    editPost();
+                    editPostDOM();
             }
         }
     });
@@ -98,7 +98,8 @@ function startWork() {
            document.forms['filter']['hashTags'].value = fields.hashTags;
    }
 
-   loadAllPosts(false, skip, top, filters);
+   loadAllPosts(false, skip, top, filters)
+       .catch(err => alert(err))
 }
 
 function logout() {
@@ -323,23 +324,20 @@ function loadButtonPosts() {
     localStorage.setItem("skip", JSON.stringify(skip));
     localStorage.setItem("top", JSON.stringify(top));
 
-    loadAllPosts(true, skip, top, localStorage.getItem("filters"));
+    loadAllPosts(true, skip, top, localStorage.getItem("filters"))
+        .catch(err => alert(err))
 
 }
 
-function loadAllPosts(isButton, skip, top, filters) {
-    loadServerPosts(isButton, skip, top, filters)
-        .then(JSON.parse, function JSONError(error) {
-            throw new Error("JSON parse error : " + error.message)
-        })
-        .then(function showPost(response) {
-            showPosts(response, isButton);
-        }, function showError(error) {
-            throw new Error("Showing posts error : " + error.message);
-        })
-        .catch(function genericError(error) {
-            alert(error)
-        });
+async function loadAllPosts(isButton, skip, top, filters) {
+    try {
+        const JSONposts = await loadServerPosts(isButton, skip, top, filters);
+        const posts = await JSON.parse(JSONposts);
+        showPosts(posts, isButton);
+    }
+    catch(e) {
+        throw new Error("Loading posts failed! (" + e.message + ")");
+    }
 }
 
 //filters
@@ -348,13 +346,55 @@ function filterForm() {
     let author = document.forms['filter']['name'].value;
     let hashs = document.forms['filter']['hashTags'].value.split(" ");
     let filters = '{"author": "' + author + '", "date": "' + date + '", "hashTags": ' + JSON.stringify(hashs) + '}';
-    loadAllPosts(false,0, 10, filters);
+
+    loadAllPosts(false,0, 10, filters)
+        .catch(err => alert(err));
 
     localStorage.setItem("filters", filters);
 }
 
+async function editPost(id, post) {
+ try {
+     const answer = await editServerPost(id, post);
+     if (answer === "false") {
+         location.hash = "#add";
+     }
+     else {
+         localStorage.removeItem("editing");
+         location.hash = "#photos";
+     }
+ }
+ catch(e){
+     throw new Error("Editing post failed! (" + e.message + ")")}
+}
 
-function addPost() {
+async function addPost(author, descr, tags) {
+    try {
+        const id = await getServerLength();
+
+        let post = {};
+        post.id = (parseInt(id) + 1) + "";
+        post.author = author;
+        post.createdAt = new Date(Date.now());
+        post.description = descr;
+        post.hashTags = tags;
+        post.likes = [];
+        post.isDeleted = 'false';
+        post.photoLink = localStorage.getItem("link");
+
+        const answer = await addServerPost(post);
+        if (answer === "false")
+            location.hash = "#add";
+        else {
+            location.hash = "#photos";
+            localStorage.removeItem("addPost");
+        }
+    }
+    catch(e){
+        throw new Error("Adding post failed! (" + e.message + ")")}
+}
+
+function sendPost() {
     let user = localStorage.getItem("user");
     let editPostId = JSON.parse(localStorage.getItem("editing"));
     let isEditing = false;
@@ -370,50 +410,13 @@ function addPost() {
             newPost.description = descr;
         if(!tags.every(item => item === ""))
             newPost.hashTags = tags;
-        editServerPost(editPostId, newPost)
-            .then(response => {
-                if(response === "false"){
-                    location.hash = "#add";
-                    throw new Error('Some fields are incorrectly filled!');
-                }
-                else
-                    localStorage.removeItem("editing");
-            })
-            .then( function(){
-                location.hash = "#photos";
-            }).catch(error => alert(error));
+
+        editPost(editPostId, newPost)
+            .catch(err => alert(err));
     }
     else {
-
-        let post = {};
-
-        getServerLength()
-            .then(id => {
-                post.id = (parseInt(id) + 1) + "";
-                post.author = user;
-                post.createdAt = new Date(Date.now());
-                post.description = descr;
-                post.hashTags = tags;
-                post.likes = [];
-                post.isDeleted = 'false';
-
-                post.photoLink = localStorage.getItem("link");
-
-                addServerPost(post)
-                    .then(response => {
-                        if (response === "false") {
-                            location.hash = "#add";
-                            throw new Error('Some fields are incorrectly filled!');
-                        }
-                        else {
-                            location.hash = "#photos";
-                            localStorage.removeItem("addPost");
-                        }
-                    })
-                    .catch(error => alert(error))
-            })
-            .catch(error => alert(error));
-
+       addPost(user, descr, tags)
+            .catch(err => alert(err));
     }
 }
 
@@ -428,25 +431,59 @@ function sizeLike(like, isOn) {
     }, 400);
 }
 
-function makeLike(elem, answer) {
-    let icon = "";
-    let index = 0;
-    let likes = elem.parentNode;
-    let length = parseInt(likes.firstChild.innerHTML);
+async function makeLike(id, elem) {
+    try {
+        const answer = await likeServerPost(id, localStorage.getItem("user"), elem);
 
-    if (answer === "true") {
-        icon = "fa fa-heart";
-        index = -1;
-        length += 1;
-    }
-    else {
-        icon = "fa fa-heart-o";
-        length -= 1;
-    }
+        let icon = "";
+        let index = 0;
+        let likes = elem.parentNode;
 
-    likes.firstChild.innerHTML = length;
-    likes.children[1].className = icon;
-    sizeLike(likes.children[1], index);
+        let length = parseInt(likes.firstChild.innerHTML);
+
+        if (answer === "true") {
+            icon = "fa fa-heart";
+            index = -1;
+            length += 1;
+        }
+        else {
+            icon = "fa fa-heart-o";
+            length -= 1;
+        }
+
+        likes.firstChild.innerHTML = length;
+        likes.children[1].className = icon;
+        sizeLike(likes.children[1], index);
+    }
+    catch (e){
+        throw new Error("Like post failed! (" + e.message + ")");
+    }
+}
+
+async function deletePost(id, elem) {
+    try {
+       await deleteServerPost(id);
+       await loadAllPosts(false, 0, localStorage.getItem("top"), localStorage.getItem("filters"));
+       removePost(elem);
+    }
+    catch(e){
+        throw new Error("Deleting post failed! (" + e.message + ")");
+    }
+}
+
+async function editClickPost(id) {
+    try {
+        localStorage.setItem("editing",id);
+
+        const JSONpost = await getServerPost(id.replace('edit', ''));
+        const post = await(JSON.parse(JSONpost));
+
+        localStorage.setItem("editPost", JSON.stringify(post.photoLink + "," + post.description + "," + post.hashTags));
+        location.hash = "#add";
+    }
+    catch(e) {
+        throw new Error("Editing post failed! (" + e.message + ")");
+    }
 }
 
 //events : delete, like and edit
@@ -457,48 +494,21 @@ function menu(elem) {
         let id = target.getAttribute('id');
 
         if (id.startsWith("like")) {
-            likeServerPost(id.replace('like', ''), localStorage.getItem("user"), target)
-                .then(answer => {
-                    makeLike(target, answer);
-                })
-                .catch(error => {
-                    alert(error);
-                });
+            makeLike(id.replace('like', ''), target)
+                .catch(err => alert(err))
         }
 
         if (id.startsWith("delete")) {
             if(confirm("Do you want to delete this post?")){
-                deleteServerPost(id.replace('delete', ''))
-                    .then(response => {
-                        if(response)
-                            loadAllPosts(false, 0, localStorage.getItem("top"), localStorage.getItem("filters"));
-                        else
-                            throw new Error ("Loading posts failed!");
-                    })
-                    .catch(error => {
-                        alert(error);
-                    });
-                removePost(target);
+                deletePost(id.replace('delete', ''), target)
+                    .catch(err => alert(err))
             }
         }
 
         if(id.startsWith("edit"))
         {
-            localStorage.setItem("editing",id.replace('edit', '') );
-
-            getServerPost(id.replace('edit', ''))
-                .then(
-                    JSON.parse, error => {
-                        throw new Error("JSON parse error : " + error.message)
-                    }
-                )
-                .then(post =>  {
-                    localStorage.setItem("editPost", JSON.stringify(post.photoLink + "," + post.description + "," + post.hashTags));
-                    location.hash = "#add";
-                })
-                .catch(error => {
-                    alert(error);
-                })
+            editClickPost(id.replace('edit', ''))
+                .catch(err => alert(err))
         }
     });
 }
