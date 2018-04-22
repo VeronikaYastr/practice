@@ -34,11 +34,9 @@ app.post('/addPost', (req, res) => {
     let post = req.body;
     let posts = JSON.parse(fs.readFileSync("server/data/posts.json"));
     let allPosts = data.postsModel.addPhotoPost(posts, post);
-    console.log("hi_3");
     if (allPosts !== null) {
         fs.writeFile("server/data/posts.json", JSON.stringify(allPosts), function (error) {
             if (error){
-                console.log("hi_4");
                 throw error;
             }
         });
@@ -52,11 +50,8 @@ app.post('/addPost', (req, res) => {
 
 app.post('/getPosts/:skip&:top', (req, res) =>{
     let allPosts = JSON.parse(fs.readFileSync("server/data/posts.json"));
-    console.log("hi_deb1");
     let filteredPosts = data.postsModel.getPhotoPosts( allPosts,parseInt(req.params.skip),parseInt(req.params.top), req.body);
-    console.log("hi_de3b");
     if(filteredPosts !== null){
-        console.log("hi_debb");
         res.send(filteredPosts);
         res.status(200).end();
     }

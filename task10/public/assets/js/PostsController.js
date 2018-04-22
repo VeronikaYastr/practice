@@ -1,7 +1,5 @@
 (function(exports) {
     exports.skip = 0;
-
-    exports.link = 'https://sun9-8.userapi.com/c830208/v830208049/c5a0e/frB0c9aQ9ZI.jpg';
 })(this.postsController = {});
 
 function getContent(fragmentId, callback){
@@ -45,7 +43,6 @@ function navigate(){
             document.getElementById("cancel").addEventListener("click", function () {
                 if(confirm("Do you want to leave this page?")) {
                     location.hash = "#photos";
-                    navigate();
                 }
             });
 
@@ -74,9 +71,6 @@ function startWork() {
     let user = localStorage.getItem("user");
     checkUser(user);
 
-    if(localStorage.getItem("id") === null)
-        getServerLength();
-
     if(user !== null) {
         menu(document.getElementsByClassName("photos")[0]);
         document.getElementById("logout").addEventListener("click", logout);
@@ -84,7 +78,6 @@ function startWork() {
     else {
         document.getElementById("login").addEventListener("click", function () {
             location.hash = "#login";
-            navigate();
         });
         localStorage.setItem("skip", JSON.stringify(0));
         localStorage.setItem("top", JSON.stringify(10));
@@ -112,14 +105,12 @@ function logout() {
     localStorage.removeItem("user");
     checkUser(localStorage.getItem("user"));
     location.hash = "#photos";
-    navigate();
 }
 
 function loginSubmit() {
     let username = document.forms['login']['user'].value;
     localStorage.setItem("user", username);
     location.hash = "#photos";
-    navigate();
 }
 
 //load files from computer
@@ -160,7 +151,6 @@ function loadImage(post) {
             }
             else {
                 resolve('tmp/upload_avatars/' + xhr.responseText);
-                return true;
             }
         };
 
@@ -169,7 +159,6 @@ function loadImage(post) {
 }
 
 function loadServerPosts(isButton, skip, top, filters) {
-    console.log("hi_mark");
     skip = skip || 0;
     top = top || 10;
     localStorage.setItem("skip", skip);
@@ -197,21 +186,22 @@ function loadServerPosts(isButton, skip, top, filters) {
 }
 
 function getServerLength() {
-    let xhr = new XMLHttpRequest();
-    xhr.open("GET", "/getLength", true);
-    xhr.setRequestHeader("Content-Type", "application/json");
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState !== 4) return;
+    return new Promise( (resolve, reject) => {
+        let xhr = new XMLHttpRequest();
+        xhr.open("GET", "/getLength", true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState !== 4) return;
 
-        if (xhr.status !== 200) {
-            console.log(xhr.status + ': ' + xhr.statusText);
-        }
-        else {
-            localStorage.setItem("id", xhr.responseText);
-            return true;
-        }
-    };
-    xhr.send();
+            if (xhr.status !== 200) {
+                reject(xhr.status + ': ' + xhr.statusText);
+            }
+            else {
+                resolve(xhr.responseText);
+            }
+        };
+        xhr.send();
+    })
 }
 
 function getServerPost(id) {
@@ -258,7 +248,6 @@ function editServerPost(id, post) {
 
 function addServerPost(post) {
     return new Promise( (resolve, reject) => {
-        console.log(post);
         let xhr = new XMLHttpRequest();
         xhr.open("POST", "/addPost", true);
         xhr.setRequestHeader("Content-Type", "application/json");
@@ -341,13 +330,11 @@ function loadButtonPosts() {
 function loadAllPosts(isButton, skip, top, filters) {
     loadServerPosts(isButton, skip, top, filters)
         .then(JSON.parse, function JSONError(error) {
-            console.log("hiii");
             throw new Error("JSON parse error : " + error.message)
         })
         .then(function showPost(response) {
             showPosts(response, isButton);
         }, function showError(error) {
-            console.log("hiii_2");
             throw new Error("Showing posts error : " + error.message);
         })
         .catch(function genericError(error) {
@@ -387,7 +374,6 @@ function addPost() {
             .then(response => {
                 if(response === "false"){
                     location.hash = "#add";
-                    navigate();
                     throw new Error('Some fields are incorrectly filled!');
                 }
                 else
@@ -395,15 +381,15 @@ function addPost() {
             })
             .then( function(){
                 location.hash = "#photos";
-                navigate()})
-            .catch(error => alert(error));
+            }).catch(error => alert(error));
     }
     else {
-            new Promise(resolve => {
-                let post = {};
-                post.id = (parseInt(localStorage.getItem("id")) + 1) + "";
-                localStorage.setItem("id", post.id);
 
+        let post = {};
+
+        getServerLength()
+            .then(id => {
+                post.id = (parseInt(id) + 1) + "";
                 post.author = user;
                 post.createdAt = new Date(Date.now());
                 post.description = descr;
@@ -412,21 +398,20 @@ function addPost() {
                 post.isDeleted = 'false';
 
                 post.photoLink = localStorage.getItem("link");
-                resolve(post);
+
+                addServerPost(post)
+                    .then(response => {
+                        if (response === "false") {
+                            location.hash = "#add";
+                            throw new Error('Some fields are incorrectly filled!');
+                        }
+                        else {
+                            location.hash = "#photos";
+                            localStorage.removeItem("addPost");
+                        }
+                    })
+                    .catch(error => alert(error))
             })
-            .then(post => {addServerPost(post)}, error => {throw new Error("Adding post failed :  " + error.message)})
-            .then(response => {
-                if (response === "false") {
-                    location.hash = "#add";
-                    navigate();
-                    throw new Error('Some fields are incorrectly filled!');
-                }
-                else
-                    localStorage.removeItem("addPost");
-            })
-            .then( function(){
-                location.hash = "#photos";
-                navigate()})
             .catch(error => alert(error));
 
     }
@@ -510,7 +495,6 @@ function menu(elem) {
                 .then(post =>  {
                     localStorage.setItem("editPost", JSON.stringify(post.photoLink + "," + post.description + "," + post.hashTags));
                     location.hash = "#add";
-                    navigate();
                 })
                 .catch(error => {
                     alert(error);
