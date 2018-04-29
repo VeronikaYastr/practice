@@ -1,0 +1,43 @@
+<section class="content clearfix">
+
+  <form onchange="filterForm()" role="search" class="filters-form" action="#" name="filter" method="post">
+    <div class="filters-terms circle-block">
+      <div class="search-filters" id="search-filters">
+        <div class="filter-group">
+          <div class="search-filters-title">
+            <i class="fa fa-filter"></i>
+            <p>Filters:</p>
+          </div>
+          <div>
+            <p>Date:</p>
+            <input type="date" id="date" name="date" placeholder="Date">
+          </div>
+
+          <div>
+            <p>Name:</p>
+            <input type="text" id="name" name="name" placeholder="Name">
+          </div>
+
+          <div>
+            <p>Hashtags:</p>
+            <input type="text" id="hash" name="hashTags" placeholder="Hashtags">
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <section class="search-results">
+    <div class ="search-title">
+      <h2>Gallery</h2>
+      <h3></h3>
+    </div>
+    <div class="photos">
+
+    </div>
+  </section>
+
+  <div class="button-load" id="load">
+    <button>Load more..</button>
+  </div>
+</section>
